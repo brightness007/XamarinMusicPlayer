@@ -32,7 +32,15 @@ namespace LottoMore.Droid.Implementations
 
         public void Pause()
         {
-            throw new NotImplementedException();
+            if (_mediaPlayer.IsPlaying)
+            {
+                _mediaPlayer.Pause();
+            }
+            else
+            {
+                _mediaPlayer.Start();
+            }
+            //throw new NotImplementedException();
         }
 
         public void Play(string pathToAudioFIle)
@@ -40,14 +48,23 @@ namespace LottoMore.Droid.Implementations
             // Check if _audioPlayer is currently playing  
             if (_mediaPlayer != null)
             {
-                _mediaPlayer.Completion -= MediaPlayer_Completion;
-                _mediaPlayer.Stop();
+                if (_mediaPlayer.IsPlaying)
+                {
+                    _mediaPlayer.Completion -= MediaPlayer_Completion;
+                    _mediaPlayer.Stop();
+                }
+                else
+                {
+                    _mediaPlayer.Start();
+                    return;
+                }
             }
 
             var fullPath = pathToAudioFIle;
 
             Android.Content.Res.AssetFileDescriptor afd = null;
 
+#if true // true - play embedded audio, false - play audio from network
             try
             {
                 afd = MainActivity.CONTEXT.Assets.OpenFd(fullPath);
@@ -56,9 +73,10 @@ namespace LottoMore.Droid.Implementations
             {
                 Console.WriteLine("Error openfd: " + ex);
             }
-            if (afd != null)
+#endif
+            //if (afd != null)
             {
-                System.Diagnostics.Debug.WriteLine("Length " + afd.Length);
+                //System.Diagnostics.Debug.WriteLine("Length " + afd.Length);
                 if (_mediaPlayer == null)
                 {
                     _mediaPlayer = new MediaPlayer();
@@ -72,7 +90,10 @@ namespace LottoMore.Droid.Implementations
                 _mediaPlayer.Reset();
                 _mediaPlayer.SetVolume(1.0f, 1.0f);
 
-                _mediaPlayer.SetDataSource(afd.FileDescriptor, afd.StartOffset, afd.Length);
+                if (afd != null)
+                    _mediaPlayer.SetDataSource(afd.FileDescriptor, afd.StartOffset, afd.Length);
+                else
+                    _mediaPlayer.SetDataSource("http://192.168.1.26:3000/Despacito%20(Remix).flac");
                 _mediaPlayer.Prepare();
                 _mediaPlayer.Start();
             }
